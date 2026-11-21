@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Smart Greenhouse</title>
+<style>
+:root{--g9:#0b6b4a;--g7:#1b8a5f;--g1:#e6f1ea;--bg:#f6faf7;--ink:#17392c;--mut:#6b8a7c;--y:#f6b800;--r:#d64545;--o:#e08a00;--card:#e9f2ec}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font:13px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+#app{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;overflow-y:auto}
+.top{background:var(--g9);color:#fff;padding:10px 12px 34px;border-radius:0 0 20px 20px;position:relative}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.title{font-weight:700;font-size:15px}
+.sub{font-size:10.5px;opacity:.75}
+.pill{font-size:10.5px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.18);display:flex;align-items:center;gap:5px;cursor:pointer}
+.dot{width:7px;height:7px;border-radius:50%;background:#9aa;display:inline-block}
+.on .dot,.dot.on{background:#53e08f}.off .dot{background:#ff7b7b}.demo .dot{background:var(--y)}
+.mode{margin-top:8px;display:flex;background:rgba(255,255,255,.15);border-radius:20px;padding:3px}
+.mode button{flex:1;border:0;background:none;color:#fff;font:600 12px inherit;padding:7px;border-radius:17px;cursor:pointer;transition:.15s}
+.mode button.act{background:#fff;color:var(--g9)}
+.sheet{background:var(--bg);border-radius:20px 20px 0 0;margin-top:-22px;padding:10px 10px 12px;position:relative;flex:1}
+.h{font-weight:700;font-size:12px;margin:2px 2px 6px;display:flex;justify-content:space-between;color:var(--ink)}
+.h span{font-weight:400;color:var(--mut);font-size:10.5px}
+.sens{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.s{background:var(--card);border-radius:12px;padding:8px 9px;border:1.5px solid transparent;transition:.2s}
+.s small{color:var(--ink);font-size:11px}
+.s b{display:block;font-size:19px;color:var(--g7);margin-top:2px;white-space:nowrap}
+.s b i{font-style:normal;font-size:10.5px;font-weight:600;margin-left:2px}
+.s.w{border-color:var(--o)}.s.w b{color:var(--o)}.s.d{border-color:var(--r)}.s.d b{color:var(--r)}
+.s em{font-style:normal;font-size:9.5px;color:var(--mut);display:block}
+.alert{margin:8px 0;padding:7px 10px;border-radius:10px;background:#e3f4e9;color:var(--g9);font-size:11.5px;font-weight:600;display:flex;gap:7px;align-items:flex-start;word-break:break-word}
+.alert.bad{background:#fdeaea;color:#a52d2d}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.c{background:var(--card);border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:6px;border:1.5px solid transparent;transition:.2s}
+.c.live{border-color:var(--g7);background:#dcefe3}
+.c .t{display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px}
+.ic{width:26px;height:26px;border-radius:8px;background:#fff;display:grid;place-items:center;font-size:14px}
+.st{font-size:10.5px;color:var(--mut)}
+.st b{color:var(--g7)}.c:not(.live) .st b{color:var(--mut)}
+.sw{position:relative;width:100%;height:34px;border:0;border-radius:17px;background:#c9d9cf;color:var(--mut);font:700 12px inherit;cursor:pointer;transition:background .12s,transform .08s}
+.sw:active{transform:scale(.97)}
+.sw.on{background:var(--g7);color:#fff}
+.sw:disabled{cursor:not-allowed;opacity:.65}
+.sw.on:disabled{background:#6faa8f}
+.hint{margin-top:8px;font-size:10.5px;color:var(--mut);text-align:center}
+.cfg{position:absolute;inset:0;background:rgba(10,40,30,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.cfg.show{display:flex}
+.box{background:#fff;border-radius:16px;padding:14px;width:100%;max-width:340px}
+.box h3{font-size:14px;margin-bottom:6px}
+.box p{font-size:11px;color:var(--mut);margin-bottom:8px}
+.box input{width:100%;padding:9px;border:1.5px solid #cfe0d6;border-radius:10px;font:13px monospace;margin-bottom:8px}
+.box .b{display:flex;gap:6px}
+.box button{flex:1;border:0;border-radius:20px;padding:9px;font:700 12px inherit;cursor:pointer}
+.ok{background:var(--y);color:#3b2d00}.no{background:var(--g1);color:var(--g9)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="row">
+      <div><div class="title">🌱 Smart Greenhouse</div><div class="sub" id="upd">Menghubungkan…</div></div>
+      <div class="pill" id="conn" onclick="cfg(1)"><i class="dot"></i><span id="connT">…</span> ⚙</div>
+    </div>
+    <div class="mode">
+      <button id="mA" onclick="setMode(0)">⚙ Otomatis</button>
+      <button id="mM" onclick="setMode(1)">✋ Manual</button>
+    </div>
+  </div>
+  <div class="sheet">
+    <div class="h">Kondisi Greenhouse <span>V0 · V1 · V2</span></div>
+    <div class="sens">
+      <div class="s" id="s0"><small>Suhu</small><b><span id="v0">--</span><i>°C</i></b><em id="e0">Ideal &lt; 30</em></div>
+      <div class="s" id="s1"><small>Kelembapan</small><b><span id="v1">--</span><i>%</i></b><em id="e1">Ideal 60–80</em></div>
+      <div class="s" id="s2"><small>Cahaya</small><b><span id="v2">--</span><i>lx</i></b><em id="e2">Ideal 1–400</em></div>
+    </div>
+    <div class="alert" id="al"><span>✅</span><span id="alT">Normal</span></div>
+    <div class="h">Perangkat <span id="modeTxt">Mode otomatis</span></div>
+    <div class="ctl" id="ctl"></div>
+    <div class="hint" id="hint">Mode Otomatis: alat mengatur sendiri. Pilih Manual untuk kontrol langsung.</div>
+  </div>
+  <div class="cfg" id="cfg"><div class="box">
+    <h3>Koneksi Blynk</h3>
+    <p>Isi Auth Token device. Kosongkan untuk mode Demo (simulasi tanpa alat).</p>
+    <input id="tok" placeholder="Auth Token" autocomplete="off">
+    <div class="b"><button class="no" onclick="cfg(0)">Batal</button><button class="ok" onclick="saveTok()">Simpan</button></div>
+  </div></div>
+</div>
+
+<script>
+/* ===== KONFIGURASI =====
+   Isi TOKEN di bawah (atau lewat tombol ⚙ / URL ?token=xxxx). Kosong = mode Demo. */
+var TOKEN = "";
+var HOST  = "https://blynk.cloud";      // sesuaikan region, mis. sgp1.blynk.cloud
+var POLL_MS = 1000;                      // interval baca (alat kirim tiap 3 dtk, perubahan status dikirim langsung)
+var T = {ON:30, OFF:28, WARN:35, HLOW:60, HHIGH:80, LLOW:1, LHIGH:400};
+
+/* Datastream sesuai Excel */
+var DEV = [
+  {n:'Kipas',     ic:'🌀', st:3,  cmd:5,  on:'Menyala',   off:'Mati'},
+  {n:'Ventilasi', ic:'🪟', st:7,  cmd:8,  on:'Terbuka penuh', off:'Idle (sebagian)'},
+  {n:'Pompa',     ic:'💧', st:9,  cmd:10, on:'Menyala',   off:'Mati'},
+  {n:'LED Cahaya',ic:'💡', st:12, cmd:11, on:'Menyala',   off:'Mati'}
+];
+var S = {0:null,1:null,2:null,3:0,4:0,5:0,6:'Normal',7:0,8:0,9:0,10:0,11:0,12:0};
+var pend = {};           // perintah lokal yang belum dikonfirmasi alat
+var online = false, demo = false, busy = false;
+
+try{ var q=new URLSearchParams(location.search).get('token'); if(q) localStorage.setItem('gh_tok',q);
+     TOKEN = TOKEN || localStorage.getItem('gh_tok') || ''; }catch(e){}
+demo = !TOKEN;
+
+/* ===== UI ===== */
+var ctl = document.getElementById('ctl');
+DEV.forEach(function(d,i){
+  ctl.insertAdjacentHTML('beforeend',
+   '<div class="c" id="c'+i+'"><div class="t"><span class="ic">'+d.ic+'</span>'+d.n+'</div>'+
+   '<div class="st">Kondisi: <b id="st'+i+'">--</b></div>'+
+   '<button class="sw" id="sw'+i+'" onclick="toggle('+i+')">OFF</button></div>');
+});
+function $(id){return document.getElementById(id)}
+function cls(el,c,on){el.classList[on?'add':'remove'](c)}
+
+function render(){
+  var m = +S[4]===1;
+  cls($('mA'),'act',!m); cls($('mM'),'act',m);
+  $('modeTxt').textContent = m ? 'Mode manual' : 'Mode otomatis';
+  $('hint').textContent = m ? 'Mode Manual: tombol langsung mengirim perintah ke alat.' :
+                              'Mode Otomatis: alat mengatur sendiri. Pilih Manual untuk kontrol langsung.';
+  // sensor
+  var t=S[0],h=S[1],l=S[2];
+  $('v0').textContent = t==null?'--':(+t).toFixed(1);
+  $('v1').textContent = h==null?'--':(+h).toFixed(1);
+  $('v2').textContent = l==null?'--':Math.round(l);
+  lvl('s0', t==null?'':(t>=T.WARN?'d':(t>=T.ON?'w':'')));
+  lvl('s1', h==null?'':((h<T.HLOW||h>T.HHIGH)?'w':''));
+  lvl('s2', l==null?'':((l<T.LLOW||l>T.LHIGH)?'w':''));
+  // peringatan V6
+  var a = String(S[6]||'Normal'), bad = a.trim().toLowerCase()!=='normal';
+  $('alT').textContent = a; $('al').firstElementChild.textContent = bad?'⚠️':'✅'; cls($('al'),'bad',bad);
+  // perangkat
+  DEV.forEach(function(d,i){
+    var live = +S[d.st]===1, cmd = m ? +S[d.cmd]===1 : live;
+    $('st'+i).textContent = live ? d.on : d.off;
+    cls($('c'+i),'live',live);
+    var b=$('sw'+i); b.disabled = !m; cls(b,'on',cmd);
+    b.textContent = m ? (cmd?'ON':'OFF') : 'Otomatis';
+  });
+}
+function lvl(id,c){var e=$(id);e.className='s'+(c?' '+c:'')}
+function setConn(){
+  var p=$('conn'); p.className='pill '+(demo?'demo':(online?'on':'off'));
+  $('connT').textContent = demo?'Demo':(online?'Alat Online':'Alat Offline');
+}
+function stamp(){ $('upd').textContent='Update '+new Date().toLocaleTimeString('id-ID'); }
+
+/* ===== KIRIM PERINTAH (tanpa menunggu poll) ===== */
+function put(pin,val){
+  pend[pin]={v:val,t:Date.now()+3000};
+  S[pin]=val; render();                         // UI langsung berubah (optimistic)
+  if(demo){ simApply(pin,val); return; }
+  fetch(HOST+'/external/api/update?token='+encodeURIComponent(TOKEN)+'&v'+pin+'='+val,{keepalive:true})
+    .then(function(){ setTimeout(poll,150); })  // baca balik cepat untuk konfirmasi dari alat
+    .catch(function(){ delete pend[pin]; });
+}
+function toggle(i){ if(+S[4]!==1) return; var p=DEV[i].cmd; put(p, +S[p]===1?0:1); }
+function setMode(m){ if(+S[4]===m) return; put(4,m); }
+
+/* ===== BACA DATA (batch 1 request) ===== */
+function poll(){
+  if(demo||busy) return; busy=true;
+  var pins=''; for(var i=0;i<=12;i++) pins+='&v'+i;
+  var base=HOST+'/external/api/';
+  Promise.all([
+    fetch(base+'get?token='+encodeURIComponent(TOKEN)+pins,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}),
+    fetch(base+'isHardwareConnected?token='+encodeURIComponent(TOKEN),{cache:'no-store'}).then(function(r){return r.text()}).catch(function(){return 'false'})
+  ]).then(function(r){
+    var d=r[0]; online = String(r[1]).trim()==='true';
+    var now=Date.now();
+    for(var k in d){ var p=+k.slice(1), v=d[k];
+      var pd=pend[p];
+      if(pd){ if(now>pd.t || +v===+pd.v) delete pend[p]; else continue; }  // jangan timpa perintah yang sedang dikirim
+      S[p]=(p===6)?v:(v===''||v==null?S[p]:+v);
+    }
+    setConn(); render(); stamp();
+  }).catch(function(){ online=false; setConn(); $('upd').textContent='Gagal terhubung ke Blynk'; })
+  .then(function(){busy=false});
+}
+
+/* ===== MODE DEMO: meniru logika alat (sesuai sheet Parameter) ===== */
+function simApply(pin,val){
+  if(pin===4 && val===1){ S[5]=S[3];S[8]=S[7];S[10]=S[9];S[11]=S[12]; }
+  if(S[4]===1){ if(pin===5)S[3]=val; if(pin===8)S[7]=val; if(pin===10)S[9]=val; if(pin===11)S[12]=val; }
+  delete pend[pin]; simAlerts(); render();
+}
+function simAlerts(){
+  var a=[]; if(S[0]>=T.WARN)a.push('Suhu sangat tinggi'); if(S[1]<T.HLOW)a.push('Kelembapan rendah');
+  if(S[1]>T.HHIGH)a.push('Kelembapan tinggi'); if(S[2]<T.LLOW)a.push('Cahaya rendah'); if(S[2]>T.LHIGH)a.push('Cahaya tinggi');
+  S[6]=a.length?a.join('; '):'Normal';
+}
+function simTick(){
+  var fan=+S[3];
+  S[0]=S[0]==null?27:Math.max(20,Math.min(40,S[0]+(Math.random()-.4)*.8-(fan?.5:0)));
+  S[1]=S[1]==null?65:Math.max(40,Math.min(95,S[1]+(Math.random()-.5)*2+(+S[9]?2.5:-.4)));
+  S[2]=S[2]==null?250:Math.max(0,Math.min(900,S[2]+(Math.random()-.5)*40));
+  if(+S[4]===0){
+    if(S[0]>=T.ON){S[3]=1;S[7]=1}else if(S[0]<=T.OFF){S[3]=0;S[7]=0}
+    if(S[1]<T.HLOW) S[9]=1; else if(S[1]>=(S[0]>=T.ON?70:75)) S[9]=0;
+    S[12]=S[2]<=T.LHIGH?1:0;
+    S[5]=S[3];S[8]=S[7];S[10]=S[9];S[11]=S[12];
+  }
+  simAlerts(); online=true; render(); stamp();
+}
+
+function cfg(o){ cls($('cfg'),'show',!!o); if(o)$('tok').value=TOKEN; }
+function saveTok(){
+  TOKEN=$('tok').value.trim(); try{localStorage.setItem('gh_tok',TOKEN)}catch(e){}
+  demo=!TOKEN; S[0]=S[1]=S[2]=null; cfg(0); setConn(); render(); poll();
+}
+
+setConn(); render();
+setInterval(function(){ demo?simTick():poll() }, POLL_MS);
+if(!demo) poll(); else simTick();
+</script>
+</body>
+</html>
